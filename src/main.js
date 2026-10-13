@@ -35,7 +35,7 @@ function screen() {
     return h('div', { class: 'section' },
       h('div', { class: 'code' }, ctx.code),
       h('div', { class: 'center' }, 'NOT FOUND'),
-      h('button', { class: 'btn outline', onClick: () => go(null) }, '作る'));
+      h('button', { class: 'btn outline', onClick: () => go(null) }, '部屋を作る'));
   }
   const state = computeState(ctx.room, now());
   const me = memberOf(state, ctx.uid);

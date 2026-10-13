@@ -16,7 +16,7 @@ function cardFace(card) {
   const n = steps(card);
   return h('div', { class: 'card' },
     h('div', { class: `rank ${card === JOKER ? 'joker' : ''}` }, card),
-    h('div', { class: 'steps' }, n == null ? '好きな駅' : `${n}駅`));
+    h('div', { class: 'steps' }, n == null ? '今の路線の好きな駅' : `${n}駅`));
 }
 
 /** 盤。onCell があればマスはボタン。 */
@@ -50,7 +50,7 @@ export function renderPlay(ctx, state, me) {
 
   const recordDraw = (card, source) => send({ type: 'draw', card, source }).catch(fail);
 
-  const pickHand = () => sheet('手持ちの札', (close) => h('div', { class: 'cards14' },
+  const pickHand = () => sheet('引いた札', (close) => h('div', { class: 'cards14' },
     CARDS.map((c) => h('button', { type: 'button', class: c === JOKER ? 'joker' : '', onClick: () => { close(); recordDraw(c, 'hand'); } }, c))));
 
   const pickMission = (arriveId, station) => {
@@ -85,25 +85,25 @@ export function renderPlay(ctx, state, me) {
     h('div', { class: 'card-area' },
       cardFace(team.lastCard),
       h('div', { class: 'card-btns' },
-        h('button', { type: 'button', class: 'btn', onClick: () => recordDraw(draw(), 'app') }, '引く'),
-        h('button', { type: 'button', class: 'btn outline', onClick: pickHand }, '手持ち'))),
+        h('button', { type: 'button', class: 'btn', onClick: () => recordDraw(draw(), 'app') }, 'アプリで引く'),
+        h('button', { type: 'button', class: 'btn outline', onClick: pickHand }, 'トランプで引いた'))),
 
     h('div', { class: 'section' },
-      h('div', { class: 'label' }, '盤', h('span', { class: 'count num' }, `${team.score.filled} / ${state.grid.length - (state.free >= 0 ? 1 : 0)}`)),
+      h('div', { class: 'label' }, '盤'),
       boardGrid(state, team, { onCell: arriveAt })),
 
     hasMissions && h('div', { class: 'section' },
-      h('div', { class: 'label' }, 'お題', h('span', { class: 'count num' }, `${team.score.missionCount} / ${state.missionIds.length}`)),
+      h('div', { class: 'label' }, 'お題'),
       state.missionSize ? h('div', { style: 'width:72px' }, missionGrid(state, team)) : null,
       h('div', { class: 'missions' },
         state.missionIds.map((id, i) => h('div', { class: `mission ${team.missionFilled[i] ? 'on' : ''}` }, dia(), missionText(id)))),
-      open && h('button', { type: 'button', class: 'btn gold', onClick: () => pickMission(open.id, open.station) }, `${open.station}でお題`)),
+      open && h('button', { type: 'button', class: 'btn gold', onClick: () => pickMission(open.id, open.station) }, `${open.station}のお題を選ぶ`)),
 
     h('div', { class: 'breakdown' },
       kpi(team.score.filled, '駅'),
-      kpi(team.score.stationBingo, 'ビンゴ'),
+      kpi(team.score.stationBingo, '駅の列'),
       kpi(team.score.missionCount, 'お題'),
-      kpi(team.score.missionBingo, 'お題ビンゴ')),
+      kpi(team.score.missionBingo, 'お題の列')),
 
     others.length > 0 && h('div', { class: 'section' },
       h('div', { class: 'label' }, '相手'),

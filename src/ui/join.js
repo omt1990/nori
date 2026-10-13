@@ -46,7 +46,7 @@ export function renderJoin(ctx, state) {
     h('div', { class: 'section' },
       h('div', { class: 'label' }, '名前'),
       h('input', {
-        class: 'input', type: 'text', maxLength: 20, autocomplete: 'nickname', placeholder: '呼ばれたい名前', value: draft.name, 'data-keep': 'name',
+        class: 'input', type: 'text', maxLength: 20, autocomplete: 'nickname', value: draft.name, 'data-keep': 'name',
         onInput: (e) => { draft.name = e.target.value; ctx.render(); },
         onKeydown: (e) => { if (e.key === 'Enter' && ok) join(); },
       })),
@@ -57,7 +57,6 @@ export function renderJoin(ctx, state) {
 }
 
 export function renderLobby(ctx, state, me) {
-  const filled = Object.values(state.teams).filter((t) => t.members.length > 0).length;
   const start = async () => {
     try { await startRoom(ctx.code, ctx.uid, me.team); } catch { toast('開始できなかった', 'err'); }
   };
@@ -68,5 +67,5 @@ export function renderLobby(ctx, state, me) {
       teamCards(state, me.team, null),
       h('button', { type: 'button', class: 'btn outline sm', onClick: () => { draft.name = me.name; draft.team = null; ctx.rejoin = true; ctx.render(); } }, 'チームを変える')),
     h('button', { type: 'button', class: 'btn gold', disabled: !state.canStart, onClick: start },
-      state.canStart ? '開始' : `あと${Math.max(0, 2 - filled)}チーム`));
+      state.canStart ? '開始' : '相手チーム待ち'));
 }
