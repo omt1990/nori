@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "test": "node --test test/*.test.js",
     "test:rules": "firebase emulators:exec --only database,auth --project demo-nori 'node --test test-rules/*.test.js'",
-    "emulators": "firebase emulators:start --only database,auth --project demo-nori"
+    "emulators": "firebase emulators:start --only database,auth --project demo-nori",
+    "dev:emu": "VITE_EMULATOR=1 vite --port 5173 --strictPort"
   },
   "dependencies": {
     "firebase": "13.0.0"
