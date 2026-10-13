@@ -8,8 +8,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "test": "node --test test/*.test.js",
-    "test:rules": "firebase emulators:exec --only database --project demo-nori 'node --test test-rules/*.test.js'",
-    "emulators": "firebase emulators:start --only database --project demo-nori"
+    "test:rules": "firebase emulators:exec --only database,auth --project demo-nori 'node --test test-rules/*.test.js'",
+    "emulators": "firebase emulators:start --only database,auth --project demo-nori"
   },
   "dependencies": {
     "firebase": "13.0.0"

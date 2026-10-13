@@ -1,0 +1,90 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "rooms": {
+      "$code": {
+        ".read": "auth != null && $code.matches(/^[A-HJ-NP-Z2-9]{6}$/) && (!data.exists() || now < data.child('config/createdAt').val() + 2592000000)",
+        "config": {
+          ".write": "auth != null && $code.matches(/^[A-HJ-NP-Z2-9]{6}$/) && !data.exists() && newData.exists()",
+          ".validate": "newData.hasChildren(['createdAt', 'duration', 'size', 'board', 'lines', 'teams']) && newData.child('createdAt').val() == now && (newData.child('duration').val() == 7200000 || newData.child('duration').val() == 14400000 || newData.child('duration').val() == 28800000) && (newData.child('size').val() == 3 || newData.child('size').val() == 4 || newData.child('size').val() == 5)",
+          "board": {
+            "$i": {
+              ".validate": "newData.isString() && newData.val().length <= 40"
+            }
+          },
+          "lines": {
+            "$i": {
+              ".validate": "newData.isString() && newData.val().length <= 80"
+            }
+          },
+          "teams": {
+            "$i": {
+              ".validate": "newData.isString() && newData.val().length <= 8"
+            }
+          },
+          "missions": {
+            "$i": {
+              ".validate": "newData.isString() && newData.val().length <= 8"
+            }
+          },
+          "missionSize": {
+            ".validate": "newData.isNumber()"
+          },
+          "$other": {
+            ".validate": "newData.isNumber() || newData.isString() || newData.isBoolean()"
+          }
+        },
+        "startedAt": {
+          ".write": "auth != null && !data.exists() && newData.exists() && data.parent().child('config').exists()",
+          ".validate": "newData.isNumber() && newData.val() == now"
+        },
+        "events": {
+          "$id": {
+            ".write": "auth != null && !data.exists() && newData.exists()",
+            ".validate": "newData.hasChildren(['type', 'uid', 'at']) && newData.child('uid').val() == auth.uid && newData.child('at').val() == now && data.parent().parent().child('config').exists() && now < data.parent().parent().child('config/createdAt').val() + 2592000000 && ((newData.child('type').val() == 'join' && (!data.parent().parent().child('startedAt').exists() || now < data.parent().parent().child('startedAt').val() + data.parent().parent().child('config/duration').val())) || (newData.child('type').val() == 'start' && newData.parent().parent().child('startedAt').exists()) || (newData.child('type').val() != 'join' && newData.child('type').val() != 'start' && data.parent().parent().child('startedAt').exists() && now < data.parent().parent().child('startedAt').val() + data.parent().parent().child('config/duration').val()))",
+            "type": {
+              ".validate": "newData.isString() && newData.val().matches(/^(join|start|draw|arrive|mission|void)$/)"
+            },
+            "uid": {
+              ".validate": "newData.isString()"
+            },
+            "at": {
+              ".validate": "newData.isNumber()"
+            },
+            "team": {
+              ".validate": "newData.isString() && newData.val().length <= 8"
+            },
+            "name": {
+              ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 20"
+            },
+            "card": {
+              ".validate": "newData.isString() && newData.val().length <= 5"
+            },
+            "source": {
+              ".validate": "newData.val() == 'app' || newData.val() == 'hand'"
+            },
+            "station": {
+              ".validate": "newData.isString() && newData.val().length <= 40"
+            },
+            "mission": {
+              ".validate": "newData.isString() && newData.val().length <= 8"
+            },
+            "arrive": {
+              ".validate": "newData.isString() && newData.val().length <= 40"
+            },
+            "ref": {
+              ".validate": "newData.isString() && newData.val().length <= 40"
+            },
+            "$other": {
+              ".validate": false
+            }
+          }
+        },
+        "$other": {
+          ".write": false
+        }
+      }
+    }
+  }
+}
