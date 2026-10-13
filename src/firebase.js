@@ -72,3 +72,9 @@ export function startRoom(code, uid, team) {
     [`events/${key}`]: { type: 'start', team, uid, at: serverTimestamp() },
   });
 }
+
+// 開発時だけ：ブラウザから圏外／復帰を再現する（本番ビルドには入らない）
+if (import.meta.env.DEV) {
+  const { goOffline, goOnline } = await import('firebase/database');
+  window.__nori = { goOffline: () => goOffline(db), goOnline: () => goOnline(db) };
+}
