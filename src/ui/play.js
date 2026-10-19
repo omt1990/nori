@@ -1,7 +1,7 @@
 // 画面3：プレイ。残り時間 → 札 → 盤（到着）→ お題 → 相手の盤 → ログ。
 
 import { CARDS, JOKER, draw, steps } from '../cards.js';
-import { toGrid } from '../board.js';
+import { lineNames } from '../board.js';
 import { openArrival } from '../state.js';
 import { missionText } from '../data/missions.js';
 import { appendEvent } from '../firebase.js';
@@ -89,7 +89,7 @@ export function renderPlay(ctx, state, me) {
         h('button', { type: 'button', class: 'btn outline', onClick: pickHand }, 'トランプで引いた'))),
 
     h('div', { class: 'section' },
-      h('div', { class: 'label' }, '盤'),
+      h('div', { class: 'label' }, '盤', h('span', { class: 'count' }, lineNames(ctx.data, ctx.room.config.lines).join('・'))),
       boardGrid(state, team, { onCell: arriveAt })),
 
     hasMissions && h('div', { class: 'section' },

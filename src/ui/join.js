@@ -1,6 +1,7 @@
 // 画面2：参加（名前・チーム）と、開始前のロビー。
 
 import { appendEvent, startRoom } from '../firebase.js';
+import { lineNames } from '../board.js';
 import { h, dia, toast } from './dom.js';
 
 const draft = { name: '', team: null, busy: false };
@@ -32,9 +33,17 @@ export function shareBlock(ctx) {
       h('button', { type: 'button', class: 'btn outline sm', onClick: share }, '共有')));
 }
 
+const canJoin = () => draft.name.trim().length > 0 && Boolean(draft.team) && !draft.busy;
+
+/** 選ばれた路線（表示だけ）。 */
+export function linesBlock(ctx) {
+  const names = lineNames(ctx.data, ctx.room.config.lines);
+  return h('div', { class: 'chips' }, names.map((n) => h('span', { class: 'chip', 'aria-pressed': 'true' }, n)));
+}
+
 export function renderJoin(ctx, state) {
-  const ok = draft.name.trim().length > 0 && draft.team && !draft.busy;
   const join = async () => {
+    if (!canJoin()) return;
     draft.busy = true; ctx.render();
     try {
       await appendEvent(ctx.code, ctx.uid, { type: 'join', name: draft.name.trim().slice(0, 20), team: draft.team });
@@ -43,17 +52,23 @@ export function renderJoin(ctx, state) {
   };
   return h('div', { class: 'section', style: 'gap:24px' },
     h('div', { class: 'code' }, ctx.code),
+    linesBlock(ctx),
     h('div', { class: 'section' },
       h('div', { class: 'label' }, '名前'),
       h('input', {
         class: 'input', type: 'text', maxLength: 20, autocomplete: 'nickname', value: draft.name, 'data-keep': 'name',
-        onInput: (e) => { draft.name = e.target.value; ctx.render(); },
-        onKeydown: (e) => { if (e.key === 'Enter' && ok) join(); },
+        // 1文字ごとに画面を描き直すと日本語の変換が切れるので、ボタンの有効・無効だけ切り替える
+        onInput: (e) => {
+          draft.name = e.target.value;
+          const b = document.querySelector('[data-join]');
+          if (b) b.disabled = !canJoin();
+        },
+        onKeydown: (e) => { if (e.key === 'Enter' && !e.isComposing) join(); },
       })),
     h('div', { class: 'section' },
       h('div', { class: 'label' }, 'チーム'),
       teamCards(state, draft.team, (name) => { draft.team = name; ctx.render(); })),
-    h('button', { type: 'button', class: 'btn', disabled: !ok, onClick: join }, '参加'));
+    h('button', { type: 'button', class: 'btn', 'data-join': '1', disabled: !canJoin(), onClick: join }, '参加'));
 }
 
 export function renderLobby(ctx, state, me) {
@@ -62,6 +77,7 @@ export function renderLobby(ctx, state, me) {
   };
   return h('div', { class: 'section', style: 'gap:24px' },
     shareBlock(ctx),
+    linesBlock(ctx),
     h('div', { class: 'section' },
       h('div', { class: 'label' }, 'チーム', h('span', { class: 'count' }, `${Object.keys(state.members).length}人`)),
       teamCards(state, me.team, null),

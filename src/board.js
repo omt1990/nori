@@ -1,11 +1,12 @@
-// 時間 → 盤の大きさ・路線の本数・お題の盤。選んだ路線の駅だけから盤を作る。
+// 時間 → 盤の大きさ・路線の本数・お題の盤。路線はアプリが東京メトロから自動で決め、その駅だけから盤を作る。
 
 export const HOURS = [2, 4, 8];
+export const METRO = '東京地下鉄';
 
 const SETTINGS = {
-  2: { size: 3, lineMin: 1, lineMax: 2, missionSize: 0, missionCount: 6 },
-  4: { size: 4, lineMin: 3, lineMax: 4, missionSize: 3, missionCount: 9 },
-  8: { size: 5, lineMin: Infinity, lineMax: Infinity, missionSize: 4, missionCount: 16 },
+  2: { size: 3, lineCount: 2, missionSize: 0, missionCount: 6 },
+  4: { size: 4, lineCount: 4, missionSize: 3, missionCount: 9 },
+  8: { size: 5, lineCount: Infinity, missionSize: 4, missionCount: 16 },
 };
 
 export function settingsFor(hours) {
@@ -41,16 +42,34 @@ export function candidateStations(data, lineIds) {
   return data.stations.filter((s) => s.lines.some((id) => set.has(id)));
 }
 
-/** 時間に対して路線の選び方が正しいか。8時間は全路線固定。 */
-export function lineSelectionError(data, hours, lineIds) {
-  const s = settingsFor(hours);
-  if (hours === 8) return null;
-  if (lineIds.length < s.lineMin) return `路線を${s.lineMin}本以上`;
-  if (lineIds.length > s.lineMax) return `路線は${s.lineMax}本まで`;
-  const need = cellCount(s.size);
-  const have = candidateStations(data, lineIds).length;
-  if (have < need) return `駅が足りない（${have}/${need}）`;
-  return null;
+const BRANCH = /分岐線$/;
+
+/** 東京メトロの本線（分岐線を除く）。 */
+export function metroLines(data) {
+  return visibleLines(data).filter((l) => l.operator === METRO && !BRANCH.test(l.name));
+}
+
+/**
+ * 時間に応じて東京メトロから路線を自動で選ぶ。2h=2本・4h=4本・8h=全線。
+ * 本線を引いたら、その分岐線（丸ノ内線→方南町支線）も盤に入れる。
+ */
+export function autoLines(data, hours, random = Math.random) {
+  const n = settingsFor(hours).lineCount;
+  const main = metroLines(data);
+  const picked = n === Infinity ? main : shuffle(main, random).slice(0, n);
+  const ids = picked.map((l) => l.id);
+  for (const l of visibleLines(data)) {
+    if (l.operator === METRO && BRANCH.test(l.name) && picked.some((p) => l.name.startsWith(p.name))) ids.push(l.id);
+  }
+  return ids;
+}
+
+/** 表示用の路線名（分岐線は本線に含めて出さない）。 */
+export function lineNames(data, lineIds) {
+  return lineIds
+    .map((id) => data.lines.find((l) => l.id === id))
+    .filter((l) => l && !BRANCH.test(l.name))
+    .map((l) => l.name);
 }
 
 export function shuffle(items, random) {

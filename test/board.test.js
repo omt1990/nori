@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
-  bingoCount, candidateStations, cellCount, freeIndex, lineSelectionError, makeBoard, seeded, settingsFor, toGrid, visibleLines,
+  autoLines, bingoCount, candidateStations, cellCount, freeIndex, lineNames, makeBoard, metroLines, seeded, settingsFor, toGrid, visibleLines,
 } from '../src/board.js';
 
 const data = JSON.parse(readFileSync(new URL('../src/data/stations.json', import.meta.url)));
@@ -51,19 +51,33 @@ test('同じ乱数なら同じ盤', () => {
 test('駅が足りなければ作れない', () => {
   const ids = [line('京成電鉄', '金町線')]; // 3駅
   assert.throws(() => makeBoard(data, ids, 3, seeded(1)));
-  assert.match(lineSelectionError(data, 2, ids), /駅が足りない/);
 });
 
-test('路線の本数の制約', () => {
-  const g = line('東京地下鉄', '銀座線');
+test('路線はアプリが東京メトロから自動で決める：2h=2本・4h=4本・8h=全線', () => {
+  assert.equal(metroLines(data).length, 9, '東京メトロの本線は9本');
+  assert.equal(lineNames(data, autoLines(data, 2, seeded(1))).length, 2);
+  assert.equal(lineNames(data, autoLines(data, 4, seeded(1))).length, 4);
+  assert.equal(lineNames(data, autoLines(data, 8, seeded(1))).length, 9);
+  for (const hours of [2, 4, 8]) {
+    const ids = autoLines(data, hours, seeded(3));
+    const size = settingsFor(hours).size;
+    assert.ok(candidateStations(data, ids).length >= cellCount(size), `${hours}h の盤を埋める駅がある`);
+    assert.ok(ids.every((id) => id.startsWith('東京地下鉄|')), '東京メトロだけ');
+  }
+  assert.notDeepEqual(autoLines(data, 2, seeded(1)), autoLines(data, 2, seeded(2)), '乱数で変わる');
+});
+
+test('丸ノ内線を引いたら方南町の分岐線も盤に入る。表示は本線だけ', () => {
   const m = line('東京地下鉄', '丸ノ内線');
-  const h = line('東京地下鉄', '日比谷線');
-  assert.match(lineSelectionError(data, 2, []), /1本以上/);
-  assert.equal(lineSelectionError(data, 2, [g]), null);
-  assert.match(lineSelectionError(data, 2, [g, m, h]), /2本まで/);
-  assert.match(lineSelectionError(data, 4, [g, m]), /3本以上/);
-  assert.equal(lineSelectionError(data, 4, [g, m, h]), null);
-  assert.equal(lineSelectionError(data, 8, []), null);
+  const branch = line('東京地下鉄', '丸ノ内線分岐線');
+  let found = null;
+  for (let seed = 1; seed < 50 && !found; seed++) {
+    const ids = autoLines(data, 2, seeded(seed));
+    if (ids.includes(m)) found = ids;
+  }
+  assert.ok(found, '丸ノ内線が選ばれる種がある');
+  assert.ok(found.includes(branch));
+  assert.deepEqual(lineNames(data, found).filter((n) => n.includes('分岐')), []);
 });
 
 test('FREE を含む盤とビンゴ判定', () => {
