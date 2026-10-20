@@ -12,7 +12,9 @@ Tokyo On Foot の企画のひとつ。チームで電車に乗り、トランプ
 | `docs/setup-owner.md` | Firebase 作成・Vercel 接続の手順（2026-10-19 実施済み。作り直すときの記録） |
 | `~/ai-projects/audits/2026-10-13-tokyo-metro-run/AUDIT.md` | 旧アプリの検収。同じ失敗をしないための参照 |
 
-## 現在地（2026-10-19）
+## 現在地（2026-10-21）
+
+- **2026-10-20 SEO/Search Console**：`index.html` に canonical・og:url・og:image（`public/og.jpg`）・Twitter カード、`public/robots.txt`・`public/sitemap.xml` を追加（`6f21ff2`・本番反映済み）。Search Console（omata.yusuke1990）に `https://nori-olive-eta.vercel.app/` を登録・所有権確認済み・sitemap 送信済み。検証メタは index.html にあり、削除すると所有権が失効する
 
 - **本番稼働中：https://nori-olive-eta.vercel.app**（2026-10-19 接続。本番で部屋作成・参加まで確認済み）
 - 設計 §7 の 1〜5 を実施：
