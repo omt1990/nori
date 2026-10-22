@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { PHASE, computeState, memberOf, openArrival, sortEvents } from '../src/state.js';
+import { PHASE, computeState, memberOf, openArrival, openArrivals, sortEvents } from '../src/state.js';
 
 const H = 3600 * 1000;
 const T0 = 1_760_000_000_000;
@@ -98,7 +98,7 @@ test('得点：駅pt = 到着マス + ビンゴ列×3、FREE は点にならな�
   assert.equal(sc.total, 6, 'お題0なら 駅pt × 1');
 });
 
-test('お題：直近の到着1つにつき1つ。同じ駅に戻ればまたできる。得点は駅pt×(お題pt+1)', () => {
+test('お題：到着1つにつき1つ。同じ駅に戻ればまたできる。得点は駅pt×(お題pt+1)', () => {
   const start = T0 + 10_000;
   const list = [
     join('u1', 'a', '東'), join('u2', 'b', '西'),
@@ -123,6 +123,34 @@ test('お題：直近の到着1つにつき1つ。同じ駅に戻ればまたで
   const r2 = room(config3, start, [...list, arrive('u1', '東', 'B', start + 7)]);
   const s2 = computeState(r2, start + 100);
   assert.equal(openArrival(s2, '東').station, 'B');
+});
+
+test('お題：まだお題の無い到着ならどれにでも付けられる（新しい順に一覧）。同じ到着に2つ目は無効', () => {
+  const start = T0 + 10_000;
+  const list = [
+    join('u1', 'a', '東'), join('u2', 'b', '西'),
+    arrive('u1', '東', 'A', start + 1),                                   // e002
+    arrive('u1', '東', 'B', start + 2),                                   // e003
+    arrive('u1', '東', 'C', start + 3),                                   // e004
+  ];
+  const s0 = computeState(room(config3, start, list), start + 100);
+  assert.deepEqual(openArrivals(s0, '東').map((a) => a.station), ['C', 'B', 'A']);
+
+  const list2 = [...list,
+    { type: 'mission', uid: 'u1', team: '東', mission: 'm01', arrive: 'e002', at: start + 4 }, // 一番古い到着に付ける
+    { type: 'mission', uid: 'u1', team: '東', mission: 'm02', arrive: 'e002', at: start + 5 }, // 同じ到着に2つ目 → 無効
+    { type: 'mission', uid: 'u1', team: '東', mission: 'm02', arrive: 'e999', at: start + 6 }, // 無い到着 → 無効
+  ];
+  const s = computeState(room(config3, start, list2), start + 100);
+  const east = s.teams['東'];
+  assert.equal(east.missions.length, 1);
+  assert.equal(east.missions[0].station, 'A');
+  assert.equal(s.log[5].ok, true);
+  assert.equal(s.log[5].station, 'A', 'ログに駅名が付く');
+  assert.equal(s.log[6].ok, false);
+  assert.equal(s.log[7].ok, false);
+  assert.deepEqual(openArrivals(s, '東').map((a) => a.station), ['C', 'B']);
+  assert.equal(openArrival(s, '東').station, 'C');
 });
 
 test('お題の盤（4時間・3×3）はビンゴ列×3', () => {

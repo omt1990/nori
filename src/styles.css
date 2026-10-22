@@ -271,6 +271,26 @@ button.cell:hover:not(.on):not(:disabled) { background: var(--paper-2); }
 .mission .dia { flex: none; border: 1.5px solid var(--ink); background: transparent; width: 10px; height: 10px; }
 .mission.on .dia { background: var(--ink); }
 button.mission:hover:not(:disabled) { border-color: var(--ink); }
+.mission.dim { color: var(--ink-3); border-color: var(--paper-2); }
+.mission.dim .dia { border-color: var(--ink-3); }
+
+/* お題を付ける到着を選ぶ */
+.arrivals { display: flex; flex-direction: column; gap: 6px; }
+.arrival {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  min-height: 48px;
+  padding: 10px 14px;
+  border: 1.5px solid var(--paper-3);
+  border-radius: var(--radius);
+  background: var(--white);
+  font-size: 16px;
+  font-weight: 700;
+  width: 100%;
+}
+.arrival:hover { border-color: var(--ink); }
+.arrival .time { color: var(--ink-2); font-weight: 600; font-size: 13px; }
 
 /* 相手の盤 */
 .others { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 12px; }

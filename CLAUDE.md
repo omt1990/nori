@@ -12,7 +12,9 @@ Tokyo On Foot の企画のひとつ。チームで電車に乗り、トランプ
 | `docs/setup-owner.md` | Firebase 作成・Vercel 接続の手順（2026-10-19 実施済み。作り直すときの記録） |
 | `~/ai-projects/audits/2026-10-13-tokyo-metro-run/AUDIT.md` | 旧アプリの検収。同じ失敗をしないための参照 |
 
-## 現在地（2026-10-21）
+## 現在地（2026-10-23）
+
+- **2026-10-23 お題の入口と中身**：お題の文字を押す→どの到着に付けるかを選ぶ（`src/ui/play.js` pickArrival・`src/state.js` openArrivals）。到着直後の一覧と金ボタンは廃止。お題は 30 件で確定（`src/data/missions.js`・初期20件はそのまま＋m21〜m30）。基準は設計 §5。ルール（database.rules.json）は変更なし。実機2台テストは未実施のまま
 
 - **2026-10-20 SEO/Search Console**：`index.html` に canonical・og:url・og:image（`public/og.jpg`）・Twitter カード、`public/robots.txt`・`public/sitemap.xml` を追加（`6f21ff2`・本番反映済み）。Search Console（omata.yusuke1990）に `https://nori-olive-eta.vercel.app/` を登録・所有権確認済み・sitemap 送信済み。検証メタは index.html にあり、削除すると所有権が失効する
 
@@ -23,8 +25,8 @@ Tokyo On Foot の企画のひとつ。チームで電車に乗り、トランプ
   3. ルール：`database.rules.json` ＋ エミュレータでのルールテスト 11 件（`npm run test:rules`・Java 必要）
   4. 画面4つ：`src/ui/`。Tokyo On Foot の世界観
   5. 同時操作・圏外復帰：エミュレータで確認（同時到着6件・goOffline→到着→goOnline で記録が残る）。**実機2台は未実施**
-- 残り：実機2台での同時操作テスト（設計 §7-5 の最後）。お題の本番用の作り直し（別の回）
-- お題の中身は**暫定**（`src/data/missions.js` 20 件）。作り直しは別の回（設計 §5）。id は変えない
+- 残り：実機2台での同時操作テスト（設計 §7-5 の最後）
+- お題の id は変えない・消さない（30日以内の古い部屋が参照する）
 - JR は N02 の正式名でなく運転系統名で選べるようにした（山手線 30 駅・京浜東北線・埼京線を合成、東北線・東海道線・赤羽線は隠す）。
   合成の駅名リストは `scripts/extract-stations.py` の `JR_SERVICE_LINES`
 

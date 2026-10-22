@@ -83,10 +83,11 @@ export function computeState(room, now) {
       }
     } else if (e.type === 'mission') {
       entry.mission = e.mission;
-      // 直近の到着1つにつきお題1つ。到着が void されればそのお題も消える
-      const arrival = team.arrivals[team.arrivals.length - 1];
+      // 到着1つにつきお題1つ。まだお題の付いていない到着ならどれでもよい。到着が void されればそのお題も消える
+      const arrival = team.arrivals.find((a) => a.id === e.arrive);
       const mi = missionIds.indexOf(e.mission);
-      entry.ok = !!arrival && arrival.id === e.arrive && mi >= 0 && !usedArrivals.has(e.arrive) && !team.missionFilled[mi];
+      entry.ok = !!arrival && mi >= 0 && !usedArrivals.has(e.arrive) && !team.missionFilled[mi];
+      if (arrival) entry.station = arrival.station;
       if (entry.ok && !entry.voided) {
         usedArrivals.add(e.arrive);
         team.missionFilled[mi] = true;
@@ -149,10 +150,15 @@ export function memberOf(state, uid) {
   return (state && state.members[uid]) || null;
 }
 
-/** この到着でまだお題を記録できるか（直近の到着1つにつき1つ）。 */
-export function openArrival(state, teamName) {
+/** お題をまだ付けていない到着（新しい順）。 */
+export function openArrivals(state, teamName) {
   const team = state.teams[teamName];
-  if (!team || team.arrivals.length === 0) return null;
-  const last = team.arrivals[team.arrivals.length - 1];
-  return team.missions.some((m) => m.arrive === last.id) ? null : last;
+  if (!team) return [];
+  const used = new Set(team.missions.map((m) => m.arrive));
+  return team.arrivals.filter((a) => !used.has(a.id)).slice().reverse();
+}
+
+/** お題をまだ付けていない一番新しい到着。無ければ null。 */
+export function openArrival(state, teamName) {
+  return openArrivals(state, teamName)[0] || null;
 }

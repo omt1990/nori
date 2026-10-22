@@ -2,7 +2,7 @@
 
 import { CARDS, JOKER, draw, steps } from '../cards.js';
 import { lineNames } from '../board.js';
-import { openArrival } from '../state.js';
+import { openArrivals } from '../state.js';
 import { missionText } from '../data/missions.js';
 import { appendEvent } from '../firebase.js';
 import { h, dia, sheet, toast, fmtClock, fmtTime } from './dom.js';
@@ -44,7 +44,7 @@ function missionGrid(state, team) {
 export function renderPlay(ctx, state, me) {
   const team = state.teams[me.team];
   const others = Object.values(state.teams).filter((t) => t.name !== me.team);
-  const open = openArrival(state, me.team);
+  const opens = openArrivals(state, me.team);
   const hasMissions = state.missionIds.length > 0;
   const send = (body) => appendEvent(ctx.code, ctx.uid, { team: me.team, ...body });
 
@@ -53,24 +53,19 @@ export function renderPlay(ctx, state, me) {
   const pickHand = () => sheet('引いた札', (close) => h('div', { class: 'cards14' },
     CARDS.map((c) => h('button', { type: 'button', class: c === JOKER ? 'joker' : '', onClick: () => { close(); recordDraw(c, 'hand'); } }, c))));
 
-  const pickMission = (arriveId, station) => {
-    const left = state.missionIds.filter((id, i) => !team.missionFilled[i]);
-    if (left.length === 0) return;
-    sheet(station, (close) => h('div', { class: 'missions' },
-      left.map((id) => h('button', {
-        type: 'button', class: 'mission',
-        onClick: () => { close(); send({ type: 'mission', mission: id, arrive: arriveId }).catch(fail); },
-      }, dia(), missionText(id)))));
+  // お題の文字を押す → どの到着に付けるかを選ぶ（到着1つにつきお題1つ）
+  const pickArrival = (missionId) => {
+    if (opens.length === 0) { toast('到着なし'); return; }
+    sheet(missionText(missionId), (close) => h('div', { class: 'arrivals' },
+      opens.map((a) => h('button', {
+        type: 'button', class: 'arrival',
+        onClick: () => { close(); send({ type: 'mission', mission: missionId, arrive: a.id }).catch(fail); },
+      }, h('span', {}, a.station), h('span', { class: 'time' }, a.at ? fmtTime(a.at) : '')))));
   };
 
   const arriveAt = (station) => sheet(station, (close) => h('button', {
     type: 'button', class: 'btn',
-    onClick: () => {
-      close();
-      const r = send({ type: 'arrive', station });
-      r.catch(fail);
-      if (hasMissions) pickMission(r.key, station);
-    },
+    onClick: () => { close(); send({ type: 'arrive', station }).catch(fail); },
   }, '到着'));
 
   const undo = (id) => send({ type: 'void', ref: id }).catch(fail);
@@ -96,8 +91,9 @@ export function renderPlay(ctx, state, me) {
       h('div', { class: 'label' }, 'お題'),
       state.missionSize ? h('div', { style: 'width:72px' }, missionGrid(state, team)) : null,
       h('div', { class: 'missions' },
-        state.missionIds.map((id, i) => h('div', { class: `mission ${team.missionFilled[i] ? 'on' : ''}` }, dia(), missionText(id)))),
-      open && h('button', { type: 'button', class: 'btn gold', onClick: () => pickMission(open.id, open.station) }, `${open.station}のお題を選ぶ`)),
+        state.missionIds.map((id, i) => team.missionFilled[i]
+          ? h('div', { class: 'mission on' }, dia(), missionText(id))
+          : h('button', { type: 'button', class: `mission ${opens.length === 0 ? 'dim' : ''}`, onClick: () => pickArrival(id) }, dia(), missionText(id))))),
 
     h('div', { class: 'breakdown' },
       kpi(team.score.filled, '駅'),
@@ -128,7 +124,7 @@ function describe(e) {
     case 'start': return '開始';
     case 'draw': return e.card === JOKER ? 'JOKER' : `${e.card} → ${e.steps}駅`;
     case 'arrive': return `${e.station} 到着`;
-    case 'mission': return missionText(e.mission);
+    case 'mission': return e.station ? `${e.station} ${missionText(e.mission)}` : missionText(e.mission);
     case 'void': return '取消';
     default: return e.type;
   }
